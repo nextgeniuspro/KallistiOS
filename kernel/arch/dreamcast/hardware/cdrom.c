@@ -174,7 +174,7 @@ cd_cmd_ret_t cdrom_abort_cmd(uint32_t timeout, gdc_cmd_hnd_t hnd) {
 /* Return the status of the drive as two integers (see constants) */
 int cdrom_get_status(int *status, int *disc_type) {
     int rv = CD_ERR_OK;
-    cd_check_drive_params_t params = {0};
+    cd_check_drive_status_t params = {0};
 
     /* We might be called in an interrupt to check for ISO cache
        flushing, so make sure we're not interrupting something
@@ -215,7 +215,7 @@ int cdrom_get_status(int *status, int *disc_type) {
 
 /* Wrapper for the change datatype syscall */
 int cdrom_change_datatype(cd_read_sec_part_t sector_part, cd_track_type_t track_type, int sector_size) {
-    cd_check_drive_params_t check_params = {0};
+    cd_check_drive_status_t check_status = {0};
     cd_sec_mode_params_t params;
 
     mutex_lock_scoped(&_g1_ata_mutex);
@@ -232,9 +232,9 @@ int cdrom_change_datatype(cd_read_sec_part_t sector_part, cd_track_type_t track_
         if(track_type == CD_TRACK_TYPE_DEFAULT) {
             /* If not overriding track_type, check what the drive thinks we should 
                use */
-            syscall_gdrom_check_drive(check_params);
+            syscall_gdrom_check_drive(check_status);
 
-            if(check_params.disc_type == CD_CDROM_XA)
+            if(check_status.disc_type == CD_CDROM_XA)
                 track_type = CD_TRACK_TYPE_MODE2_FORM1;
             else
                 track_type = CD_TRACK_TYPE_MODE1;

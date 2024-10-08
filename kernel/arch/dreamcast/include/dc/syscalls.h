@@ -227,13 +227,13 @@ typedef enum cd_disc_types {
     CD_FAIL     = 0xf0     /**< \brief Need reset syscalls */
 } cd_disc_types_t;
 
-/** \brief      Params for Check Drive syscall
+/** \brief      Status filled by Check Drive syscall
     \ingroup    gdrom_syscalls
 */
-typedef struct cd_check_drive_params {
+typedef struct cd_check_drive_status {
     cd_stat_t       status;
     cd_disc_types_t disc_type;
-} cd_check_drive_params_t;
+} cd_check_drive_status_t;
 
 /** \brief      Handle for a requested command
     \ingroup    gdrom_syscalls
@@ -489,7 +489,7 @@ void syscall_gdrom_reset(void);
     \return                 0 on success, or non-zero on
                             failure.
 */
-int syscall_gdrom_check_drive(cd_check_drive_params_t params);
+int syscall_gdrom_check_drive(cd_check_drive_status_t status);
 
 /** \brief      Send a command to the GDROM.
     \ingroup    gdrom_syscalls
