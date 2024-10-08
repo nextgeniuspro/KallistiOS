@@ -63,12 +63,7 @@ cd_cmd_ret_t cdrom_exec_cmd(cd_cmd_code_t cmd, void *param) {
 }
 
 cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeout) {
-    int32_t status[4] = {
-        0, /* Error code 1 */
-        0, /* Error code 2 */
-        0, /* Transferred size */
-        0  /* ATA status waiting */
-    };
+    cd_cmd_chk_status_t status = {0};
     gdc_cmd_id_t id;
     cd_cmd_chk_t n;
     int i;
@@ -77,7 +72,7 @@ cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeo
     mutex_lock_scoped(&_g1_ata_mutex);
 
     /* Submit the command */
-    for(i = 0; i < 10; ++i) {
+    for(i = 0; i < CD_CMD_RETRY_MAX; ++i) {
         id = syscall_gdrom_send_command(cmd, param);
         if (id != 0) {
             break;
@@ -113,10 +108,10 @@ cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeo
 
     if(n == CD_CMD_COMPLETED || n == CD_CMD_STREAMING)
         return CD_ERR_OK;
-    else if(n == CD_CMD_INACTIVE)
-        return CD_ERR_INACTIVE;
+    else if(n == CD_CMD_NOT_FOUND)
+        return CD_ERR_NO_ACTIVE;
     else {
-        switch(status[0]) {
+        switch(status.err1) {
             case 2:
                 return CD_ERR_NO_DISC;
             case 6:
@@ -124,7 +119,7 @@ cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeo
             default:
                 return CD_ERR_SYS;
         }
-        if(status[1] != 0)
+        if(status.err2 != 0)
             return CD_ERR_SYS;
     }
 }

@@ -42,18 +42,8 @@ __BEGIN_DECLS
     \ingroup            vfs
 */
 
-/** \defgroup cd_cmd_ata_status       ATA Statuses
-    \brief                            ATA statuses for GD-ROM driver
-    \ingroup  gdrom 
-
-    @{
-*/
-#define ATA_STAT_INTERNAL   0x00
-#define ATA_STAT_IRQ        0x01
-#define ATA_STAT_DRQ_0      0x02
-#define ATA_STAT_DRQ_1      0x03
-#define ATA_STAT_BUSY       0x04
-/** @} */
+/** \brief    Max times to retry a command */
+#define CD_CMD_RETRY_MAX 10
 
 /** \brief    Read modes for CDDA
     \ingroup  gdrom

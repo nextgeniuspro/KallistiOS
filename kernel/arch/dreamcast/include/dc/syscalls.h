@@ -291,7 +291,7 @@ typedef enum cd_cmd_ret {
     CD_ERR_DISC_CHG  = 2,   /**< \brief Disc changed, but not reinitted yet */
     CD_ERR_SYS       = 3,   /**< \brief System error */
     CD_ERR_ABORTED   = 4,   /**< \brief Command aborted */
-    CD_ERR_INACTIVE  = 5,   /**< \brief System inactive? */
+    CD_ERR_NO_ACTIVE = 5,   /**< \brief System inactive? */
     CD_ERR_TIMEOUT   = 6,   /**< \brief Aborted due to timeout */
 } cd_cmd_ret_t;
 
@@ -301,30 +301,8 @@ typedef enum cd_cmd_ret {
 #define ERR_DISC_CHG    __depr("Please use the new CD_ prefixed versions.") CD_ERR_DISC_CHG
 #define ERR_SYS         __depr("Please use the new CD_ prefixed versions.") CD_ERR_SYS
 #define ERR_ABORTED     __depr("Please use the new CD_ prefixed versions.") CD_ERR_ABORTED
-#define ERR_NO_ACTIVE   __depr("Please use the new CD_ prefixed versions.") CD_ERR_INACTIVE
+#define ERR_NO_ACTIVE   __depr("Please use the new CD_ prefixed versions.") CD_ERR_NO_ACTIVE
 #define ERR_TIMEOUT     __depr("Please use the new CD_ prefixed versions.") CD_ERR_TIMEOUT
-
-/** \brief      Responses from GDROM check command syscall
-    \ingroup    gdrom_syscalls
-
-    These are return values of syscall_gdrom_check_command.
-*/
-typedef enum cd_cmd_chk {
-    CD_CMD_FAILED     = -1,   /**< \brief Command failed */
-    CD_CMD_INACTIVE   =  0,   /**< \brief System inactive? */
-    CD_CMD_PROCESSING =  1,   /**< \brief Processing command */
-    CD_CMD_COMPLETED  =  2,   /**< \brief Command completed successfully */
-    CD_CMD_STREAMING  =  3,   /**< \brief Stream type command is in progress */
-    CD_CMD_BUSY       =  4,   /**< \brief GD syscalls is busy */
-} cd_cmd_chk_t;
-
-/* These are defines provided for compatibility. */
-#define FAILED      __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_FAILED
-#define NO_ACTIVE   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_INACTIVE
-#define PROCESSING  __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_PROCESSING
-#define COMPLETED   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_COMPLETED
-#define STREAMING   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_STREAMING
-#define BUSY        __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_BUSY
 
 /** \brief      Read Sector Part
     \ingroup    gdrom_syscalls
@@ -532,6 +510,58 @@ int syscall_gdrom_check_drive(cd_check_drive_params_t params);
 */
 gdc_cmd_id_t syscall_gdrom_send_command(cd_cmd_code_t cmd, void *params);
 
+/** \brief      Responses from GDROM check command syscall
+    \ingroup    gdrom_syscalls
+
+    These are return values of syscall_gdrom_check_command.
+*/
+typedef enum cd_cmd_chk {
+    CD_CMD_FAILED     = -1,   /**< \brief Command failed */
+    CD_CMD_NOT_FOUND  =  0,   /**< \brief Command requested not found */
+    CD_CMD_PROCESSING =  1,   /**< \brief Processing command */
+    CD_CMD_COMPLETED  =  2,   /**< \brief Command completed successfully */
+    CD_CMD_STREAMING  =  3,   /**< \brief Stream type command is in progress */
+    CD_CMD_BUSY       =  4,   /**< \brief GD syscalls is busy */
+} cd_cmd_chk_t;
+
+/* These are defines provided for compatibility. */
+#define FAILED      __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_FAILED
+#define NO_ACTIVE   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_NOT_FOUND
+#define PROCESSING  __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_PROCESSING
+#define COMPLETED   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_COMPLETED
+#define STREAMING   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_STREAMING
+#define BUSY        __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_BUSY
+
+/** \brief    ATA Statuses
+    \ingroup  gdrom_syscalls
+
+    These are the different statuses that can be returned in
+    the 4th field of cd_cmd_chk_status by syscall_gdrom_check_command.
+
+*/
+typedef enum cd_cmd_chk_ata_status {
+    ATA_STAT_INTERNAL   = 0x00,
+    ATA_STAT_IRQ        = 0x01,
+    ATA_STAT_DRQ_0      = 0x02,
+    ATA_STAT_DRQ_1      = 0x03,
+    ATA_STAT_BUSY       = 0x04
+} cd_cmd_chk_ata_status_t;
+
+/** \brief      GDROM Command Extra Status
+    \ingroup    gdrom_syscalls
+
+    This represents the data filled in by syscall_gdrom_check_command.
+    It provides more detailled data on the possible reasons a command
+    may have failed or have not yet been processed to supplement the
+    return value of the syscall.
+*/
+typedef struct cd_cmd_chk_status {
+    int32_t                 err1; /**< \brief Error code 1 */
+    int32_t                 err2; /**< \brief Error code 2 */
+    size_t                  size; /**< \brief Transferred size */
+    cd_cmd_chk_ata_status_t ata;  /**< \brief ATA status */
+} cd_cmd_chk_status_t;
+
 /** \brief      Check status of queued command for the GDROM.
     \ingroup    gdrom_syscalls
 
@@ -550,7 +580,7 @@ gdc_cmd_id_t syscall_gdrom_send_command(cd_cmd_code_t cmd, void *params);
 
     \sa syscall_gdrom_send_command(), syscall_gdrom_exec_server()
 */
-cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_id_t id, int32_t status[4]);
+cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_id_t id, cd_cmd_chk_status_t status);
 
 /** \brief      Process queued GDROM commands.
     \ingroup    gdrom_syscalls
