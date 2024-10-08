@@ -235,13 +235,13 @@ typedef struct cd_check_drive_params {
     cd_disc_types_t disc_type;
 } cd_check_drive_params_t;
 
-/** \brief      ID of a queued command
+/** \brief      Handle for a requested command
     \ingroup    gdrom_syscalls
     
-    This is the ID of a queued command. It is returned by syscall_gdrom_send_command
-    and is passed to other syscalls to specify which queued command to act on.
+    This is the handle command. It is returned by syscall_gdrom_send_command
+    and is passed to other syscalls to specify which command to act on.
 */
-typedef uint32_t gdc_cmd_id_t;
+typedef int32_t gdc_cmd_hnd_t;
 
 /** \brief      Command codes for GDROM syscalls
     \ingroup    gdrom_syscalls
@@ -491,13 +491,13 @@ void syscall_gdrom_reset(void);
 */
 int syscall_gdrom_check_drive(cd_check_drive_params_t params);
 
-/** \brief      Send a command to the GDROM command queue.
+/** \brief      Send a command to the GDROM.
     \ingroup    gdrom_syscalls
 
-    This function sends a command to the GDROM queue.
+    This function sends a command to the GDROM.
 
     \note
-    Call syscall_gdrom_exec_server() to run queued commands.
+    Call syscall_gdrom_exec_server() to run requested commands.
 
     \param  cmd             The command code.
     \param  params          The pointer to parameter block for the command, 
@@ -508,7 +508,7 @@ int syscall_gdrom_check_drive(cd_check_drive_params_t params);
 
     \sa syscall_gdrom_check_command(), syscall_gdrom_exec_server()
 */
-gdc_cmd_id_t syscall_gdrom_send_command(cd_cmd_code_t cmd, void *params);
+gdc_cmd_hnd_t syscall_gdrom_send_command(cd_cmd_code_t cmd, void *params);
 
 /** \brief      Responses from GDROM check command syscall
     \ingroup    gdrom_syscalls
@@ -562,13 +562,13 @@ typedef struct cd_cmd_chk_status {
     cd_cmd_chk_ata_status_t ata;  /**< \brief ATA status */
 } cd_cmd_chk_status_t;
 
-/** \brief      Check status of queued command for the GDROM.
+/** \brief      Check status of a command for the GDROM.
     \ingroup    gdrom_syscalls
 
-    This function checks if a queued command has completed.
+    This function checks if a requested command has completed.
 
-    \param  id              The request to check.
-    \param  status          The pointer to four 32-bit integers to 
+    \param  hnd             The handle of the request to check.
+    \param  status          The pointer to cd_cmd_chk_status_t to
                             receive status information.
 
     \retval -1              Request has failed.
@@ -580,12 +580,12 @@ typedef struct cd_cmd_chk_status {
 
     \sa syscall_gdrom_send_command(), syscall_gdrom_exec_server()
 */
-cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_id_t id, cd_cmd_chk_status_t status);
+cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_hnd_t hnd, cd_cmd_chk_status_t status);
 
-/** \brief      Process queued GDROM commands.
+/** \brief      Process requested GDROM commands.
     \ingroup    gdrom_syscalls
 
-    This function starts processing queued commands. This must be 
+    This function starts processing requested commands. This must be
     called a few times to process all commands. An example of it in 
     use can be seen in \sa cdrom_exec_cmd_timed() (see hardware/cdrom.c).
 
@@ -593,17 +593,17 @@ cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_id_t id, cd_cmd_chk_status_t st
 */
 void syscall_gdrom_exec_server(void);
 
-/** \brief      Abort a queued GDROM command.
+/** \brief      Abort a GDROM command.
     \ingroup    gdrom_syscalls
 
-    This function tries to abort a previously queued command.
+    This function tries to abort a previously requested command.
 
     \param  id              The request to abort.
 
     \return                 0 on success, or non-zero on
                             failure.
 */
-int syscall_gdrom_abort_command(gdc_cmd_id_t id);
+int syscall_gdrom_abort_command(gdc_cmd_hnd_t id);
 
 /** \brief      Sets/gets the sector mode for read commands.
     \ingroup    gdrom_syscalls
@@ -645,7 +645,7 @@ void syscall_gdrom_dma_callback(uintptr_t callback, void *param);
     \return                 0 on success, or non-zero on
                             failure.
 */
-int syscall_gdrom_dma_transfer(gdc_cmd_id_t id, const int32_t params[2]);
+int syscall_gdrom_dma_transfer(gdc_cmd_hnd_t id, const int32_t params[2]);
 
 /** \brief      Checks a GDROM DMA transfer.
     \ingroup    gdrom_syscalls
@@ -660,7 +660,7 @@ int syscall_gdrom_dma_transfer(gdc_cmd_id_t id, const int32_t params[2]);
     \retval 0               On success.
     \retval -1              On failure.
 */
-int syscall_gdrom_dma_check(gdc_cmd_id_t id, size_t *size);
+int syscall_gdrom_dma_check(gdc_cmd_hnd_t id, size_t *size);
 
 /** \brief      Setup GDROM PIO callback.
     \ingroup    gdrom_syscalls
@@ -689,7 +689,7 @@ void syscall_gdrom_pio_callback(uintptr_t callback, void *param);
     \return                 0 on success, or non-zero on
                             failure.
 */
-int syscall_gdrom_pio_transfer(gdc_cmd_id_t id, const int32_t params[2]);
+int syscall_gdrom_pio_transfer(gdc_cmd_hnd_t id, const int32_t params[2]);
 
 /** \brief      Checks a GDROM PIO transfer.
     \ingroup    gdrom_syscalls
@@ -704,7 +704,7 @@ int syscall_gdrom_pio_transfer(gdc_cmd_id_t id, const int32_t params[2]);
     \retval 0               On success.
     \retval -1              On failure.
 */
-int syscall_gdrom_pio_check(gdc_cmd_id_t id, size_t *size);
+int syscall_gdrom_pio_check(gdc_cmd_hnd_t id, size_t *size);
 
 /** \brief   Initializes all the syscall vectors.
 

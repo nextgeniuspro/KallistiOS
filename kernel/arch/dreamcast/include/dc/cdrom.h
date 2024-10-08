@@ -2,7 +2,7 @@
 
    dc/cdrom.h
    Copyright (C) 2000-2001 Megan Potter
-   Copyright (C) 2014 Donald Haase
+   Copyright (C) 2014, 2024 Donald Haase
    Copyright (C) 2023 Ruslan Rostovtsev
 */
 
@@ -32,6 +32,7 @@ __BEGIN_DECLS
     normal file reading, consult with the stuff for the fs and for fs_iso9660.
 
     \author Megan Potter
+    \author Donald Haase
     \author Ruslan Rostovtsev
     \see    kos/fs.h
     \see    dc/fs_iso9660.h
@@ -139,6 +140,18 @@ cd_cmd_ret_t cdrom_exec_cmd(cd_cmd_code_t cmd, void *param);
 */
 cd_cmd_ret_t
 cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeout);
+
+/** \brief    Abort a CD-ROM command.
+    \ingroup  gdrom
+
+    This function aborts the specified command using the BIOS syscall for
+    aborting GD-ROM commands.
+
+    \param  timeout         Timeout in milliseconds.
+    \param  hnd             Handle of command to abort
+    \return                 \ref cd_cmd_ret_t
+*/
+cd_cmd_ret_t cdrom_abort_cmd(uint32_t timeout, gdc_cmd_hnd_t hnd);
 
 /** \brief    Get the status of the GD-ROM drive.
     \ingroup  gdrom

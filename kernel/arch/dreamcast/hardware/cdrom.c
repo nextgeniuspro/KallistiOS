@@ -4,7 +4,7 @@
 
    Copyright (C) 2000 Megan Potter
    Copyright (C) 2014 Lawrence Sebald
-   Copyright (C) 2014 Donald Haase
+   Copyright (C) 2014, 2024 Donald Haase
    Copyright (C) 2023 Ruslan Rostovtsev
    Copyright (C) 2024 Andy Barajas
 
@@ -62,26 +62,37 @@ cd_cmd_ret_t cdrom_exec_cmd(cd_cmd_code_t cmd, void *param) {
     return cdrom_exec_cmd_timed(cmd, param, 0);
 }
 
-cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeout) {
-    cd_cmd_chk_status_t status = {0};
-    gdc_cmd_id_t id;
-    cd_cmd_chk_t n;
-    int i;
-    uint64_t begin;
+/* A helper function for the inner loop of issuing a command */
+static inline gdc_cmd_hnd_t cdrom_req_cmd(cd_cmd_code_t cmd, void *param) {
+    gdc_cmd_hnd_t hnd;
+    uint32_t        i;
 
-    mutex_lock_scoped(&_g1_ata_mutex);
+    assert(cmd > 0 && cmd < CMD_MAX);
 
     /* Submit the command */
     for(i = 0; i < CD_CMD_RETRY_MAX; ++i) {
-        id = syscall_gdrom_send_command(cmd, param);
-        if (id != 0) {
+        hnd = syscall_gdrom_send_command(cmd, param);
+        if (hnd != 0) {
             break;
         }
         syscall_gdrom_exec_server();
         thd_pass();
     }
 
-    if(id <= 0)
+    return hnd;
+}
+
+cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeout) {
+    cd_cmd_chk_status_t status = {0};
+    gdc_cmd_hnd_t hnd;
+    cd_cmd_chk_t n;
+    uint64_t begin;
+
+    mutex_lock_scoped(&_g1_ata_mutex);
+
+    hnd = cdrom_req_cmd(cmd, param);
+
+    if(hnd <= 0)
         return CD_ERR_SYS;
 
     /* Wait command to finish */
@@ -90,14 +101,14 @@ cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeo
     }
     do {
         syscall_gdrom_exec_server();
-        n = syscall_gdrom_check_command(id, status);
+        n = syscall_gdrom_check_command(hnd, status);
 
         if(n != CD_CMD_PROCESSING && n != CD_CMD_BUSY) {
             break;
         }
         if(timeout) {
             if((timer_ms_gettime64() - begin) >= (unsigned)timeout) {
-                syscall_gdrom_abort_command(id);
+                syscall_gdrom_abort_command(hnd);
                 syscall_gdrom_exec_server();
                 dbglog(DBG_ERROR, "cdrom_exec_cmd_timed: Timeout exceeded\n");
                 return CD_ERR_TIMEOUT;
@@ -122,6 +133,42 @@ cd_cmd_ret_t cdrom_exec_cmd_timed(cd_cmd_code_t cmd, void *param, uint32_t timeo
         if(status.err2 != 0)
             return CD_ERR_SYS;
     }
+}
+
+cd_cmd_ret_t cdrom_abort_cmd(uint32_t timeout, gdc_cmd_hnd_t hnd) {
+    cd_cmd_chk_status_t status = {0};
+    cd_cmd_chk_t rs;
+    uint64_t begin;
+
+    if(hnd <= 0) {
+        return CD_ERR_NO_ACTIVE;
+    }
+
+    mutex_lock_scoped(&_g1_ata_mutex);
+    syscall_gdrom_abort_command(hnd);
+
+    if(timeout) {
+        begin = timer_ms_gettime64();
+    }
+    do {
+        syscall_gdrom_exec_server();
+        rs = syscall_gdrom_check_command(hnd, status);
+
+        if(rs == CD_CMD_NOT_FOUND || rs == CD_CMD_COMPLETED) {
+            break;
+        }
+        if(timeout) {
+            if((timer_ms_gettime64() - begin) >= (unsigned)timeout) {
+                dbglog(DBG_ERROR, "cdrom_abort_cmd: Timeout exceeded, resetting.\n");
+                syscall_gdrom_reset();
+                syscall_gdrom_init();
+                return CD_ERR_TIMEOUT;
+            }
+        }
+        thd_pass();
+    } while(1);
+
+    return CD_ERR_OK;
 }
 
 /* Return the status of the drive as two integers (see constants) */
@@ -242,6 +289,7 @@ cd_cmd_ret_t cdrom_read_toc(cd_toc_t *toc_buffer, cd_area_t area) {
 /* Enhanced Sector reading: Choose mode to read in. */
 cd_cmd_ret_t cdrom_read_sectors_ex(void *buffer, uint32_t sector, size_t cnt, cd_read_mode_t mode) {
     cd_read_params_t params;
+    uintptr_t buf_addr = ((uintptr_t)buffer);
 
     params.start_sec = sector;  /* Starting sector */
     params.num_sec = cnt;       /* Number of sectors */
@@ -250,13 +298,20 @@ cd_cmd_ret_t cdrom_read_sectors_ex(void *buffer, uint32_t sector, size_t cnt, cd
 
     /* The DMA mode blocks the thread it is called in by the way we execute
        gd syscalls. It does however allow for other threads to run. */
-    /* XXX: DMA Mode may conflict with using a second G1ATA device. More 
-       testing is needed from someone with such a device.
-    */
-    if(mode == CDROM_READ_DMA)
+    if(mode == CDROM_READ_DMA) {
+        if(buf_addr & 0x1f) {
+            dbglog(DBG_ERROR, "cdrom_read_sectors_ex: Unaligned memory for DMA (32-byte).\n");
+            return CD_ERR_SYS;
+        }
         return cdrom_exec_cmd(CMD_DMAREAD, &params);
-    else if(mode == CDROM_READ_PIO)
+    }
+    else if(mode == CDROM_READ_PIO) {
+        if(buf_addr & 0x01) {
+            dbglog(DBG_ERROR, "cdrom_read_sectors_ex: Unaligned memory for PIO (2-byte).\n");
+            return CD_ERR_SYS;
+        }
         return cdrom_exec_cmd(CMD_PIOREAD, &params);
+    }
     else
         return CD_ERR_SYS;
 }
