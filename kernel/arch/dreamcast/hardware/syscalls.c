@@ -179,9 +179,9 @@ gdc_cmd_hnd_t syscall_gdrom_send_command(cd_cmd_code_t cmd, void *params) {
     return request_id;
 }
 
-cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_hnd_t id, cd_cmd_chk_status_t status) {
+cd_cmd_chk_t syscall_gdrom_check_command(gdc_cmd_hnd_t hnd, cd_cmd_chk_status_t status) {
     MAKE_SYSCALL_INT(VEC_MISC_GDROM, FUNC_GDROM_CHECK_COMMAND, 
-        id, status, SUPER_FUNC_GDROM);
+        hnd, status, SUPER_FUNC_GDROM);
 }
 
 void syscall_gdrom_exec_server(void) {
@@ -189,9 +189,9 @@ void syscall_gdrom_exec_server(void) {
         PARAM_NA, PARAM_NA, SUPER_FUNC_GDROM);
 }
 
-int syscall_gdrom_abort_command(gdc_cmd_hnd_t id) {
+int syscall_gdrom_abort_command(gdc_cmd_hnd_t hnd) {
     MAKE_SYSCALL_INT(VEC_MISC_GDROM, FUNC_GDROM_ABORT_COMMAND, 
-        id, PARAM_NA, SUPER_FUNC_GDROM);
+        hnd, PARAM_NA, SUPER_FUNC_GDROM);
 }
 
 int syscall_gdrom_sector_mode(cd_sec_mode_params_t mode) {
