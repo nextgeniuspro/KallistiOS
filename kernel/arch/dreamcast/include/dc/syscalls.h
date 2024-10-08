@@ -296,13 +296,13 @@ typedef enum cd_cmd_ret {
 } cd_cmd_ret_t;
 
 /* These are defines provided for compatibility. */
-#define ERR_OK          __depr("Please use the new CD_ prefixed versions.") CD_ERR_OK
-#define ERR_NO_DISC     __depr("Please use the new CD_ prefixed versions.") CD_ERR_NO_DISC
-#define ERR_DISC_CHG    __depr("Please use the new CD_ prefixed versions.") CD_ERR_DISC_CHG
-#define ERR_SYS         __depr("Please use the new CD_ prefixed versions.") CD_ERR_SYS
-#define ERR_ABORTED     __depr("Please use the new CD_ prefixed versions.") CD_ERR_ABORTED
-#define ERR_NO_ACTIVE   __depr("Please use the new CD_ prefixed versions.") CD_ERR_NO_ACTIVE
-#define ERR_TIMEOUT     __depr("Please use the new CD_ prefixed versions.") CD_ERR_TIMEOUT
+static const uint8_t ERR_OK          __depr("Please use the new CD_ prefixed versions.") = CD_ERR_OK;
+static const uint8_t ERR_NO_DISC     __depr("Please use the new CD_ prefixed versions.") = CD_ERR_NO_DISC;
+static const uint8_t ERR_DISC_CHG    __depr("Please use the new CD_ prefixed versions.") = CD_ERR_DISC_CHG;
+static const uint8_t ERR_SYS         __depr("Please use the new CD_ prefixed versions.") = CD_ERR_SYS;
+static const uint8_t ERR_ABORTED     __depr("Please use the new CD_ prefixed versions.") = CD_ERR_ABORTED;
+static const uint8_t ERR_NO_ACTIVE   __depr("Please use the new CD_ prefixed versions.") = CD_ERR_NO_ACTIVE;
+static const uint8_t ERR_TIMEOUT     __depr("Please use the new CD_ prefixed versions.") = CD_ERR_TIMEOUT;
 
 /** \brief      Read Sector Part
     \ingroup    gdrom_syscalls
@@ -525,12 +525,12 @@ typedef enum cd_cmd_chk {
 } cd_cmd_chk_t;
 
 /* These are defines provided for compatibility. */
-#define FAILED      __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_FAILED
-#define NO_ACTIVE   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_NOT_FOUND
-#define PROCESSING  __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_PROCESSING
-#define COMPLETED   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_COMPLETED
-#define STREAMING   __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_STREAMING
-#define BUSY        __depr("Please use the new CD_CMD_ prefixed versions.") CD_CMD_BUSY
+static const uint8_t  FAILED      __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_FAILED;
+static const uint8_t  NO_ACTIVE   __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_NOT_FOUND;
+static const uint8_t  PROCESSING  __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_PROCESSING;
+static const uint8_t  COMPLETED   __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_COMPLETED;
+static const uint8_t  STREAMING   __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_STREAMING;
+static const uint8_t  BUSY        __depr("Please use the new CD_CMD_ prefixed versions.") = CD_CMD_BUSY;
 
 /** \brief    ATA Statuses
     \ingroup  gdrom_syscalls
