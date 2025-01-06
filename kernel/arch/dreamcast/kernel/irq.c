@@ -249,21 +249,6 @@ void irq_handle_exception(int code) {
 
     /* dbgio_printf("got int %04x %04x\n", code, evt); */
 
-    /* If it's a timer interrupt, clear the status */
-    if(evt >= EXC_TMU0_TUNI0 && evt <= EXC_TMU2_TUNI2) {
-        if(evt == EXC_TMU0_TUNI0) {
-            timer_clear(TMU0);
-        }
-        else if(evt == EXC_TMU1_TUNI1) {
-            timer_clear(TMU1);
-        }
-        else {
-            timer_clear(TMU2);
-        }
-
-        handled = 1;
-    }
-
     /* If there's a handler, call it */
     {
         hnd = &irq_handlers[evt >> 4];
@@ -351,7 +336,7 @@ void irq_create_context(irq_context_t *context, uint32_t stkpntr,
 static void irq_def_timer(irq_t src, irq_context_t *context, void *data) {
     (void)src;
     (void)context;
-    (void)data;
+    timer_clear((int)data);
 }
 
 /* Default FPU exception handler (can't seem to turn these off) */
@@ -388,8 +373,10 @@ int irq_init(void) {
     /* Default to not in an interrupt */
     inside_int = 0;
 
-    /* Set a default timer handler */
-    irq_set_handler(EXC_TMU0_TUNI0, irq_def_timer, (void *)0);
+    /* Set a default timer handlers */
+    irq_set_handler(EXC_TMU0_TUNI0, irq_def_timer, (void *)TMU0);
+    irq_set_handler(EXC_TMU1_TUNI1, irq_def_timer, (void *)TMU1);
+    irq_set_handler(EXC_TMU2_TUNI2, irq_def_timer, (void *)TMU2);
 
     /* Set a trapa handler */
     irq_set_handler(EXC_TRAPA, irq_handle_trapa, trapa_handlers);
