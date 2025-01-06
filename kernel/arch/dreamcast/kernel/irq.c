@@ -48,7 +48,7 @@ static struct trapa_cb trapa_handlers[0x100];
 static struct irq_cb   global_irq_handler;
 
 /* Default IRQ context location */
-static irq_context_t    irq_context_default;
+static irq_context_t   irq_context_default;
 
 /* Are we inside an interrupt? */
 static int inside_int;
@@ -381,8 +381,8 @@ int irq_init(void) {
     irq_disable();
 
     /* Blank the exception handler tables */
-    memset(irq_handlers, 0, sizeof(irq_handlers));
-    memset(trapa_handlers, 0, sizeof(trapa_handlers));
+    memset(irq_handlers,        0, sizeof(irq_handlers));
+    memset(trapa_handlers,      0, sizeof(trapa_handlers));
     memset(&global_irq_handler, 0, sizeof(global_irq_handler));
 
     /* Default to not in an interrupt */
