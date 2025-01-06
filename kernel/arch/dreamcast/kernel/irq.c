@@ -69,12 +69,15 @@ int irq_set_handler(irq_t code, irq_handler hnd, void *data) {
 }
 
 /* Get the address of the current handler */
-irq_handler irq_get_handler(irq_t code) {
+irq_handler irq_get_handler(irq_t code, void **data) {
     /* Make sure they don't do something crackheaded */
     if(code >= 0x1000 || (code & 0x000f))
         return NULL;
 
     code >>= 4;
+
+    if(data)
+        *data = irq_handlers[code].data;
 
     return irq_handlers[code].hdl;
 }
@@ -87,7 +90,10 @@ int irq_set_global_handler(irq_handler hnd, void *data) {
 }
 
 /* Get the global exception handler */
-irq_handler irq_get_global_handler(void) {
+irq_handler irq_get_global_handler(void **data) {
+    if(data)
+        *data = global_irq_handler.data;
+
     return global_irq_handler.hdl;
 }
 

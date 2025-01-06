@@ -430,12 +430,14 @@ int irq_set_handler(irq_t code, irq_handler hnd, void *data);
 /** Get the address of the current handler for the IRQ type.
 
     \param  code            The IRQ type to look up.
+    \param  data            A pointer to a void* which will be filled in with
+                            the handler's userdata, or NULL if not interested.
     
     \return                 A pointer to the procedure to handle the exception.
 
     \sa irq_set_handler()
 */
-irq_handler irq_get_handler(irq_t code);
+irq_handler irq_get_handler(irq_t code, void **data);
 
 /** @} */
 
@@ -462,10 +464,13 @@ int irq_set_global_handler(irq_handler handler, void *data);
 
 /** Get the global exception handler.
 
+    \param data             A pointer to a void* which will be filled in with
+                            the handler's userdata, or NULL if not interested.
+
     \return                 The global exception handler set with
                             irq_set_global_handler(), or NULL if none is set.
 */
-irq_handler irq_get_global_handler(void);
+irq_handler irq_get_global_handler(void **data);
 /** @} */
 
 /** @} */
