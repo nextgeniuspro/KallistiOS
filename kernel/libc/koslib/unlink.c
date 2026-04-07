@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
-   pathconf.c
-   Copyright (C)2026
+   unlink.c
+   Copyright (C)2026 Yevhen Lohachov
 */
 
 #include <kos/fs.h>
